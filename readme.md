@@ -81,3 +81,16 @@ autoprefixer 是 读取 can i use 的 api，去检查你所用属性的一些兼
 
 1. `cnpm i -D babel-loader @babel/core @babel/preset-env`
 2. rules 添加规则
+
+```
+ {
+        test: /\.js$/,
+        exclude: /(node_modules|bower_components)/, // 排除这里面的js文件
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env'],
+          },
+        },
+      },
+```
