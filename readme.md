@@ -1,3 +1,42 @@
+# webpack 运行流程
+
+webpack 的运行流程是一个串行的过程，从启动到结束会依次执行一下流程：
+
+1. 初始化参数：从配置文件和 shell 语句中读取与合并参数，得出最终的参数
+2. 开始编译：用上一步得到的参数初始化 Compiler 对象，加载所有配置的插件，执行对象的 run 方法开始执行编译
+3. 确定入口：根据配置中的 entry 找出所有的入口文件
+4. 编译模块：从入口文件出发，调用所有配置的 loader 对模块进行翻译，再找出该模块依赖的模块，再递归本步骤直到所有入口依赖的文件都经过了本步骤的处理
+5. 完成模块编译：在经过第四步使用 loader 翻译完所有模块后，得到了每个模块被翻译后的内容，以及他们之间的依赖关系
+6. 输出资源：根据入口和模块之间的依赖关系，组成一个个包含多个模块的 chunk，再把每个 chunk 转换成一个单独的文件加入到输出列表，这步是可以修改输出内容的最后机会。
+7. 输出完成：在确定好输出内容后，根据配置确定输出和路径和文件名，把文件内容写入到文件系统。
+
+### 流程细节
+
+webpack 构建流程大致可以分为以下三个阶段
+
+1. 初始化：启动构建，读取并合并配置，加载 plugin，实例化 Compiler。
+2. 编译：从 entry 出发，针对每个模块串行调用对应的 loader 去翻译文件内容，再找到该模块依赖的模块，递归进行编译处理
+3. 输出：对编译后的模块组合成 chunk，把 chunk 转换成文件，输出到文件系统
+
+> Compiler 负责文件监听和启动编译。 Compiler 实例中包含了完整的 Webpack 配置，全局只有一个 Compiler 实例。
+
+### 输出文件 bundle.js
+
+实际上是一个立即执行函数，简写如下
+
+```js
+;(function (modules) {
+  // 模拟 require 语句
+  function __webpack_require__() {
+    // 类似node中的require
+  }
+  // 执行存放所有模块数组中的第0个模块
+  __webpack_require__(0)
+})([
+  /*存放所有模块的数组*/
+])
+```
+
 # 哈希值
 
 - hash
@@ -94,3 +133,26 @@ autoprefixer 是 读取 can i use 的 api，去检查你所用属性的一些兼
         },
       },
 ```
+
+# 常用 Loader
+
+loader 用于对模块的源代码进行转换，可以使你在 import 或加载模块时预处理文件。
+
+- style-loader：将 css 文件的内容添加到头部标签 style 里
+- css-loader：允许将 css 文件通过 require 的方式引入，并返回 css 代码
+- less-loader：处理 less
+- sass-loader:处理 sass
+- postcss-loader: 用 postcss 处理 css
+- file-loader；分发文件到 output 目录并返回相对路径
+- url-loader：和 file-loader 类型，但文件小于设定是返回 base64
+- html-minify-loader：压缩 html 文件
+- babel-loader：ES6 转 ES5
+
+#### loader 特性
+
+- 从右到左的取值执行
+- 支持链式传递
+- 可以内联显示指定
+- 可以同步，可以异步
+- 运行在 node.js，并且能够执行任何 Node.js 能做到的操作
+- loader 可以通过 options 对象配置
